@@ -29,7 +29,7 @@ public class PushManagementService {
 		Log.d(Config.LOGTAG, account.getJid().asBareJid() + ": has push support");
 		retrieveFcmInstanceToken(token -> {
 			final String androidId = PhoneHelper.getAndroidId(mXmppConnectionService);
-			final Jid appServer = Jid.of(mXmppConnectionService.getString(R.string.app_server));
+//			final Jid appServer = Jid.of(mXmppConnectionService.getString(R.string.app_server));
 			IqPacket packet = mXmppConnectionService.getIqGenerator().pushTokenToAppServer(appServer, token, androidId);
 			mXmppConnectionService.sendIqPacket(account, packet, (a, p) -> {
 				Element command = p.findChild("command", "http://jabber.org/protocol/commands");
