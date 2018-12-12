@@ -25,6 +25,8 @@ import android.widget.Toast;
 
 import org.openintents.openpgp.util.OpenPgpUtils;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import eu.siacs.conversations.Config;
@@ -38,7 +40,14 @@ import eu.siacs.conversations.entities.Contact;
 import eu.siacs.conversations.entities.ListItem;
 import eu.siacs.conversations.services.XmppConnectionService.OnAccountUpdate;
 import eu.siacs.conversations.services.XmppConnectionService.OnRosterUpdate;
+import eu.siacs.conversations.ui.adapter.MediaAdapter;
+import eu.siacs.conversations.ui.interfaces.OnMediaLoaded;
+import eu.siacs.conversations.ui.util.Attachment;
+import eu.siacs.conversations.ui.util.GridManager;
+import eu.siacs.conversations.ui.util.JidDialog;
 import eu.siacs.conversations.ui.util.MenuDoubleTabUtil;
+import eu.siacs.conversations.utils.AccountUtils;
+import eu.siacs.conversations.utils.Compatibility;
 import eu.siacs.conversations.utils.IrregularUnicodeDetector;
 import eu.siacs.conversations.utils.UIHelper;
 import eu.siacs.conversations.utils.XmppUri;
@@ -48,9 +57,12 @@ import eu.siacs.conversations.xmpp.OnUpdateBlocklist;
 import eu.siacs.conversations.xmpp.XmppConnection;
 import rocks.xmpp.addr.Jid;
 
-public class ContactDetailsActivity extends OmemoActivity implements OnAccountUpdate, OnRosterUpdate, OnUpdateBlocklist, OnKeyStatusUpdated {
+public class ContactDetailsActivity extends OmemoActivity implements OnAccountUpdate, OnRosterUpdate, OnUpdateBlocklist, OnKeyStatusUpdated, OnMediaLoaded {
     public static final String ACTION_VIEW_CONTACT = "view_contact";
     ActivityContactDetailsBinding binding;
+
+    private MediaAdapter mMediaAdapter;
+
     private Contact contact;
     private DialogInterface.OnClickListener removeFromRoster = new DialogInterface.OnClickListener() {
 
@@ -65,7 +77,7 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             if (isChecked) {
                 if (contact.getOption(Contact.Options.PENDING_SUBSCRIPTION_REQUEST)) {
-                    xmppConnectionService.sendPresencePacket(contact.getAccount(), xmppConnectionService.getPresenceGenerator().sendPresenceUpdatesTo(contact));
+                    xmppConnectionService.stopPresenceUpdatesTo(contact);
                 } else {
                     contact.setOption(Contact.Options.PREEMPTIVE_GRANT);
                 }
@@ -155,7 +167,7 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
     @Override
     protected String getShareableUri(boolean http) {
         if (http) {
-            return "https://conversations.im/j/" + XmppUri.lameUrlEncode(contact.getJid().asBareJid().toEscapedString());
+            return "https://conversations.im/i/" + XmppUri.lameUrlEncode(contact.getJid().asBareJid().toEscapedString());
         } else {
             return "xmpp:" + contact.getJid().asBareJid().toEscapedString();
         }
@@ -185,6 +197,10 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
             populateView();
         });
         binding.addContactButton.setOnClickListener(v -> showAddToRosterDialog(contact));
+
+        mMediaAdapter = new MediaAdapter(this,R.dimen.media_size);
+        this.binding.media.setAdapter(mMediaAdapter);
+        GridManager.setupLayoutManager(this, this.binding.media, R.dimen.media_size);
     }
 
     @Override
@@ -204,6 +220,8 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
             this.showDynamicTags = preferences.getBoolean(SettingsActivity.SHOW_DYNAMIC_TAGS, false);
             this.showLastSeen = preferences.getBoolean("last_activity", false);
         }
+        binding.mediaWrapper.setVisibility(Compatibility.hasStoragePermission(this) ? View.VISIBLE : View.GONE);
+        mMediaAdapter.setAttachments(Collections.emptyList());
     }
 
     @Override
@@ -225,7 +243,7 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
                 break;
             case R.id.action_delete_contact:
                 builder.setTitle(getString(R.string.action_delete_contact))
-                        .setMessage(getString(R.string.remove_contact_text, contact.getJid().toString()))
+                        .setMessage(JidDialog.style(this, R.string.remove_contact_text, contact.getJid().toEscapedString()))
                         .setPositiveButton(getString(R.string.delete),
                                 removeFromRoster).create().show();
                 break;
@@ -263,6 +281,7 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
     @Override
     public boolean onCreateOptionsMenu(final Menu menu) {
         getMenuInflater().inflate(R.menu.contact_details, menu);
+        AccountUtils.showHideMenuItems(menu);
         MenuItem block = menu.findItem(R.id.action_block);
         MenuItem unblock = menu.findItem(R.id.action_unblock);
         MenuItem edit = menu.findItem(R.id.action_edit_contact);
@@ -391,12 +410,20 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
         final LayoutInflater inflater = getLayoutInflater();
         final AxolotlService axolotlService = contact.getAccount().getAxolotlService();
         if (Config.supportOmemo() && axolotlService != null) {
+            final Collection<XmppAxolotlSession> sessions = axolotlService.findSessionsForContact(contact);
+            boolean anyActive = false;
+            for(XmppAxolotlSession session : sessions) {
+                anyActive = session.getTrust().isActive();
+                if (anyActive) {
+                    break;
+                }
+            }
             boolean skippedInactive = false;
             boolean showsInactive = false;
-            for (final XmppAxolotlSession session : axolotlService.findSessionsForContact(contact)) {
+            for (final XmppAxolotlSession session :sessions) {
                 final FingerprintStatus trust = session.getTrust();
                 hasKeys |= !trust.isCompromised();
-                if (!trust.isActive()) {
+                if (!trust.isActive() && anyActive) {
                     if (showInactiveOmemo) {
                         showsInactive = true;
                     } else {
@@ -466,6 +493,12 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
                 processFingerprintVerification(mPendingFingerprintVerificationUri);
                 mPendingFingerprintVerificationUri = null;
             }
+
+            if (Compatibility.hasStoragePermission(this)) {
+                final int limit = GridManager.getCurrentColumnCount(this.binding.media);
+                xmppConnectionService.getAttachments(account, contact.getJid().asBareJid(), limit, this);
+                this.binding.showMedia.setOnClickListener((v) -> MediaBrowserActivity.launch(this, contact));
+            }
             populateView();
         }
     }
@@ -484,5 +517,15 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
         } else {
             Toast.makeText(this, R.string.invalid_barcode, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public void onMediaLoaded(List<Attachment> attachments) {
+        runOnUiThread(() -> {
+            int limit = GridManager.getCurrentColumnCount(binding.media);
+            mMediaAdapter.setAttachments(attachments.subList(0, Math.min(limit,attachments.size())));
+            binding.mediaWrapper.setVisibility(attachments.size() > 0 ? View.VISIBLE : View.GONE);
+        });
+
     }
 }

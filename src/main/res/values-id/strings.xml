@@ -3,7 +3,6 @@
   <string name="action_settings">Pengaturan</string>
   <string name="action_add">Percakapan Baru</string>
   <string name="action_accounts">Pengaturan Akun</string>
-  <string name="action_end_conversation">Akhiri Percakapan</string>
   <string name="action_contact_details">Detil Kontak</string>
   <string name="action_secure">Amankan Percakapan</string>
   <string name="action_add_account">Tambah Akun</string>
@@ -68,8 +67,6 @@
   <string name="sharing_files_please_wait">Membagikan berkas. Mohon tunggu…</string>
   <string name="action_clear_history">Bersihkan riwayat</string>
   <string name="clear_conversation_history">Hapus Riwayat Percakapan</string>
-  <string name="clear_histor_msg">Apakah Anda ingin menghapus semua pesan dalam Percakapan ini\n\n<b>Peringatan:</b>ini tidak akan mempengaruhi pesan yang disimpan pada perangkat atau server lain.</string>
-  <string name="delete_messages">Hapus pesan</string>
   <string name="send_unencrypted_message">Kirim pesan tak-terenkripsi</string>
   <string name="send_pgp_message">Kirim pesan terenskripsi OpenPGP</string>
   <string name="your_nick_has_been_changed">Nick kamu telah dirubah</string>
@@ -101,7 +98,6 @@
   <string name="pref_never_send_crash_summary">Dengan mengirimkan kesalahan Anda membantu pengembangan Aplikasi Conversations</string>
   <string name="pref_confirm_messages">Konfirmasi Pesan</string>
   <string name="pref_ui_options">UI</string>
-  <string name="openpgp_error">OpenKeychain melaporkan kesalahan</string>
   <string name="accept">Terima</string>
   <string name="error">Sebuah kesalahan terjadi</string>
   <string name="your_account">Akun anda</string>
@@ -208,8 +204,6 @@
   <string name="ignore">Abaikan</string>
   <string name="without_mutual_presence_updates"><b>Perhatian</b> Mengirim ini tanpa kehadiran sesama pembaruan bisa menyebabkan masalah tak terduga.\n\n<small>Pergi ke kontak untuk memverifikasi langganan kehadiran anda.</small></string>
   <string name="pref_expert_options_summary">Harap berhati-hati dengan ini</string>
-  <string name="title_activity_about">Tentang Conversations</string>
-  <string name="pref_about_conversations_summary">Build dan informasi lisensi</string>
   <string name="title_pref_quiet_hours">Waktu sunyi</string>
   <string name="title_pref_quiet_hours_start_time">Waktu mulai</string>
   <string name="title_pref_quiet_hours_end_time">Waktu selesai</string>
@@ -338,8 +332,6 @@
   </plurals>
   <string name="sync_with_contacts">Sinkronkan dengan kontak</string>
   <string name="notify_on_all_messages">Tampilkan notifikasi untuk semua pesan</string>
-  <string name="pref_picture_compression">Kompres Gambar</string>
-  <string name="pref_picture_compression_summary">Rubah ukuran dan kompres gambar</string>
   <string name="always">Selalu</string>
   <string name="automatically">Secara otomatis</string>
   <string name="battery_optimizations_enabled">Pengoptimalan baterai diaktifkan</string>

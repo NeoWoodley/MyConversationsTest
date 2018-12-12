@@ -19,6 +19,7 @@ import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
+import android.support.annotation.RequiresApi;
 import android.support.v4.content.FileProvider;
 import android.system.Os;
 import android.system.StructStat;
@@ -43,6 +44,7 @@ import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -240,25 +242,27 @@ public class FileBackend {
     }
 
     public Bitmap getPreviewForUri(Attachment attachment, int size, boolean cacheOnly) {
+        final String key = "attachment_"+attachment.getUuid().toString()+"_"+String.valueOf(size);
         final LruCache<String, Bitmap> cache = mXmppConnectionService.getBitmapCache();
-        Bitmap bitmap = cache.get(attachment.getUuid().toString());
+        Bitmap bitmap = cache.get(key);
         if (bitmap != null || cacheOnly) {
             return bitmap;
         }
-        Log.d(Config.LOGTAG,"attachment mime="+attachment.getMime());
         if (attachment.getMime() != null && attachment.getMime().startsWith("video/")) {
             bitmap = cropCenterSquareVideo(attachment.getUri(), size);
             drawOverlay(bitmap, paintOverlayBlack(bitmap) ? R.drawable.play_video_black : R.drawable.play_video_white, 0.75f);
         } else {
             bitmap = cropCenterSquare(attachment.getUri(), size);
-            if ("image/gif".equals(attachment.getMime())) {
+            if (bitmap != null && "image/gif".equals(attachment.getMime())) {
                 Bitmap withGifOverlay = bitmap.copy(Bitmap.Config.ARGB_8888, true);
                 drawOverlay(withGifOverlay, paintOverlayBlack(withGifOverlay) ? R.drawable.play_gif_black : R.drawable.play_gif_white, 1.0f);
                 bitmap.recycle();
                 bitmap = withGifOverlay;
             }
         }
-        cache.put(attachment.getUuid().toString(), bitmap);
+        if (bitmap != null) {
+            cache.put(key, bitmap);
+        }
         return bitmap;
     }
 
@@ -296,7 +300,12 @@ public class FileBackend {
         if (dimensions != null) {
             return dimensions;
         }
-        int rotation = extractRotationFromMediaRetriever(metadataRetriever);
+        final int rotation;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            rotation = extractRotationFromMediaRetriever(metadataRetriever);
+        } else {
+            rotation = 0;
+        }
         boolean rotated = rotation == 90 || rotation == 270;
         int height;
         try {
@@ -317,6 +326,7 @@ public class FileBackend {
         return rotated ? new Dimensions(width, height) : new Dimensions(height, width);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     private static int extractRotationFromMediaRetriever(MediaMetadataRetriever metadataRetriever) {
         String r = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
         try {
@@ -452,7 +462,22 @@ public class FileBackend {
         }
     }
 
-    public String getConversationsDirectory(final String type) {
+    public List<Attachment> convertToAttachments(List<DatabaseBackend.FilePath> relativeFilePaths) {
+        List<Attachment> attachments = new ArrayList<>();
+        for(DatabaseBackend.FilePath relativeFilePath : relativeFilePaths) {
+            final String mime = MimeUtils.guessMimeTypeFromExtension(MimeUtils.extractRelevantExtension(relativeFilePath.path));
+            Log.d(Config.LOGTAG,"mime="+mime);
+            File file = getFileForPath(relativeFilePath.path, mime);
+            if (file.exists()) {
+                attachments.add(Attachment.of(relativeFilePath.uuid, file,mime));
+            } else {
+                Log.d(Config.LOGTAG,"file "+file.getAbsolutePath()+" doesnt exist");
+            }
+        }
+        return attachments;
+    }
+
+    private String getConversationsDirectory(final String type) {
         return getConversationsDirectory(mXmppConnectionService, type);
     }
 
@@ -669,6 +694,18 @@ public class FileBackend {
         updateFileParams(message);
     }
 
+    public boolean unusualBounds(Uri image) {
+        try {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(mXmppConnectionService.getContentResolver().openInputStream(image), null, options);
+            float ratio = (float) options.outHeight / options.outWidth;
+            return ratio > (21.0f / 9.0f) || ratio < (9.0f / 21.0f);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private int getRotation(File file) {
         return getRotation(Uri.parse("file://" + file.getAbsolutePath()));
     }
@@ -713,7 +750,7 @@ public class FileBackend {
                         thumbnail = withGifOverlay;
                     }
                 }
-                this.mXmppConnectionService.getBitmapCache().put(uuid, thumbnail);
+                cache.put(uuid, thumbnail);
             }
         }
         return thumbnail;
@@ -1000,6 +1037,7 @@ public class FileBackend {
                 return cropCenterSquare(input, size);
             }
         } catch (FileNotFoundException | SecurityException e) {
+            Log.d(Config.LOGTAG,"unable to open file "+image.toString(), e);
             return null;
         } finally {
             close(is);

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -47,14 +48,17 @@
                                 android:layout_height="@dimen/avatar_on_details_screen_size"
                                 android:layout_alignParentStart="true"
                                 app:riv_corner_radius="2dp"
-                                android:layout_marginEnd="@dimen/avatar_item_distance"/>
+                                android:layout_marginEnd="@dimen/avatar_item_distance"
+                                android:layout_alignParentLeft="true"
+                                android:layout_marginRight="@dimen/avatar_item_distance" />
 
                             <LinearLayout
                                 android:layout_width="fill_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_alignParentTop="true"
                                 android:layout_toEndOf="@+id/your_photo"
-                                android:orientation="vertical">
+                                android:orientation="vertical"
+                                android:layout_toRightOf="@+id/your_photo">
 
                                 <RelativeLayout
                                     android:layout_width="match_parent"
@@ -66,7 +70,9 @@
                                         android:layout_height="wrap_content"
                                         android:layout_alignParentStart="true"
                                         android:layout_toStartOf="@+id/edit_muc_name_button"
-                                        android:orientation="vertical">
+                                        android:orientation="vertical"
+                                        android:layout_alignParentLeft="true"
+                                        android:layout_toLeftOf="@+id/edit_muc_name_button">
 
                                         <TextView
                                             android:id="@+id/muc_title"
@@ -90,7 +96,9 @@
                                         android:layout_alignParentStart="true"
                                         android:layout_toStartOf="@+id/edit_muc_name_button"
                                         android:orientation="vertical"
-                                        android:visibility="gone">
+                                        android:visibility="gone"
+                                        android:layout_alignParentLeft="true"
+                                        android:layout_toLeftOf="@+id/edit_muc_name_button">
 
                                         <android.support.design.widget.TextInputLayout
                                             android:layout_width="match_parent"
@@ -131,7 +139,8 @@
                                         android:alpha="?attr/icon_alpha"
                                         android:background="?attr/selectableItemBackgroundBorderless"
                                         android:padding="@dimen/image_button_padding"
-                                        android:src="?attr/icon_edit_body"/>
+                                        android:src="?attr/icon_edit_body"
+                                        android:layout_alignParentRight="true" />
                                 </RelativeLayout>
                             </LinearLayout>
                         </RelativeLayout>
@@ -150,7 +159,8 @@
                                 android:layout_toStartOf="@+id/change_conference_button"
                                 android:text="@string/private_conference"
                                 android:textAppearance="@style/TextAppearance.Conversations.Body1"
-                                />
+                                android:layout_alignParentLeft="true"
+                                android:layout_toLeftOf="@+id/change_conference_button" />
 
                             <ImageButton
                                 android:id="@+id/change_conference_button"
@@ -163,7 +173,8 @@
                                 android:alpha="?attr/icon_alpha"
                                 android:background="?attr/selectableItemBackgroundBorderless"
                                 android:padding="@dimen/image_button_padding"
-                                android:src="?attr/icon_settings"/>
+                                android:src="?attr/icon_settings"
+                                android:layout_alignParentRight="true" />
                         </RelativeLayout>
 
                         <TableLayout
@@ -192,7 +203,8 @@
                                     android:layout_height="wrap_content"
                                     android:layout_gravity="end"
                                     android:paddingStart="4dp"
-                                    android:textAppearance="@style/TextAppearance.Conversations.Body1"/>
+                                    android:textAppearance="@style/TextAppearance.Conversations.Body1"
+                                    android:paddingLeft="4dp" />
                             </TableRow>
 
                         </TableLayout>
@@ -204,6 +216,52 @@
                             android:layout_gravity="end"
                             android:layout_marginTop="32dp"
                             android:textAppearance="@style/TextAppearance.Conversations.Caption"/>
+                    </LinearLayout>
+                </android.support.v7.widget.CardView>
+
+                <android.support.v7.widget.CardView
+                    android:id="@+id/media_wrapper"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/activity_vertical_margin"
+                    android:layout_marginLeft="@dimen/activity_horizontal_margin"
+                    android:layout_marginRight="@dimen/activity_horizontal_margin"
+                    android:layout_marginTop="@dimen/activity_vertical_margin">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <android.support.v7.widget.RecyclerView
+                            android:id="@+id/media"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:paddingEnd="@dimen/card_padding_regular"
+                            android:paddingStart="@dimen/card_padding_regular"
+                            android:paddingTop="@dimen/card_padding_regular"
+                            android:paddingBottom="@dimen/card_padding_list"
+                            android:layout_marginStart="-2dp"
+                            android:layout_marginEnd="-2dp"/>
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:orientation="horizontal"
+                            android:layout_gravity="end">
+
+                            <Button
+                                android:id="@+id/show_media"
+                                style="@style/Widget.Conversations.Button.Borderless"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:minWidth="0dp"
+                                android:paddingLeft="16dp"
+                                android:paddingRight="16dp"
+                                android:text="@string/view_media"
+                                android:textColor="?attr/colorAccent" />
+                        </LinearLayout>
                     </LinearLayout>
                 </android.support.v7.widget.CardView>
 
@@ -255,7 +313,8 @@
                                 android:alpha="?attr/icon_alpha"
                                 android:background="?attr/selectableItemBackgroundBorderless"
                                 android:padding="@dimen/image_button_padding"
-                                android:src="?attr/icon_edit_body"/>
+                                android:src="?attr/icon_edit_body"
+                                android:layout_alignParentRight="true" />
                         </RelativeLayout>
 
                         <RelativeLayout
@@ -271,7 +330,8 @@
                                 android:layout_toStartOf="@+id/notification_status_button"
                                 android:text="@string/notify_on_all_messages"
                                 android:textAppearance="@style/TextAppearance.Conversations.Body1"
-                                />
+                                android:layout_alignParentLeft="true"
+                                android:layout_toLeftOf="@+id/notification_status_button" />
 
                             <ImageButton
                                 android:id="@+id/notification_status_button"
@@ -284,7 +344,8 @@
                                 android:alpha="?attr/icon_alpha"
                                 android:background="?attr/selectableItemBackgroundBorderless"
                                 android:padding="@dimen/image_button_padding"
-                                android:src="?attr/icon_notifications"/>
+                                android:src="?attr/icon_notifications"
+                                android:layout_alignParentRight="true" />
                         </RelativeLayout>
 
                         <TextView

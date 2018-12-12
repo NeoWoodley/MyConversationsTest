@@ -37,6 +37,8 @@ import eu.siacs.conversations.services.XmppConnectionService;
 
 public class Resolver {
 
+    public static final int DEFAULT_PORT_XMPP = 5222;
+
     private static final String DIRECT_TLS_SERVICE = "_xmpps-client";
     private static final String STARTTLS_SERICE = "_xmpp-client";
 
@@ -63,12 +65,28 @@ public class Resolver {
             final Field useHardcodedDnsServers = DNSClient.class.getDeclaredField("useHardcodedDnsServers");
             useHardcodedDnsServers.setAccessible(true);
             useHardcodedDnsServers.setBoolean(dnsClient, false);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
+        } catch (NoSuchFieldException e) {
+            Log.e(Config.LOGTAG, "Unable to disable hardcoded DNS servers", e);
+        } catch (IllegalAccessException e) {
             Log.e(Config.LOGTAG, "Unable to disable hardcoded DNS servers", e);
         }
     }
 
+    public static List<Result> fromHardCoded(String hostname, int port) {
+        Result result = new Result();
+        result.hostname = DNSName.from(hostname);
+        result.port = port;
+        result.directTls = port == 443 || port == 5223;
+        result.authenticated = true;
+        return Collections.singletonList(result);
+    }
+
+
     public static List<Result> resolve(String domain) {
+        final  List<Result> ipResults = fromIpAddress(domain);
+        if (ipResults.size() > 0) {
+            return ipResults;
+        }
         final List<Result> results = new ArrayList<>();
         final List<Result> fallbackResults = new ArrayList<>();
         Thread[] threads = new Thread[3];
@@ -106,17 +124,38 @@ public class Resolver {
             threads[1].join();
             if (results.size() > 0) {
                 threads[2].interrupt();
-                Collections.sort(results);
-                Log.d(Config.LOGTAG, Resolver.class.getSimpleName() + ": " + results.toString());
-                return results;
+                synchronized (results) {
+                    Collections.sort(results);
+                    Log.d(Config.LOGTAG, Resolver.class.getSimpleName() + ": " + results.toString());
+                    return new ArrayList<>(results);
+                }
             } else {
                 threads[2].join();
-                Collections.sort(fallbackResults);
-                Log.d(Config.LOGTAG, Resolver.class.getSimpleName() + ": " + fallbackResults.toString());
-                return fallbackResults;
+                synchronized (fallbackResults) {
+                    Collections.sort(fallbackResults);
+                    Log.d(Config.LOGTAG, Resolver.class.getSimpleName() + ": " + fallbackResults.toString());
+                    return new ArrayList<>(fallbackResults);
+                }
             }
         } catch (InterruptedException e) {
-            return results;
+            for (Thread thread : threads) {
+                thread.interrupt();
+            }
+            return Collections.emptyList();
+        }
+    }
+
+    private static List<Result> fromIpAddress(String domain) {
+        if (!IP.matches(domain)) {
+            return Collections.emptyList();
+        }
+        try {
+            Result result = new Result();
+            result.ip = InetAddress.getByName(domain);
+            result.port = DEFAULT_PORT_XMPP;
+            return Collections.singletonList(result);
+        } catch (UnknownHostException e) {
+            return Collections.emptyList();
         }
     }
 
@@ -233,7 +272,7 @@ public class Resolver {
         public static final String AUTHENTICATED = "authenticated";
         private InetAddress ip;
         private DNSName hostname;
-        private int port = 5222;
+        private int port = DEFAULT_PORT_XMPP;
         private boolean directTls = false;
         private boolean authenticated = false;
         private int priority;
@@ -249,7 +288,7 @@ public class Resolver {
 
         static Result createDefault(DNSName hostname, InetAddress ip) {
             Result result = new Result();
-            result.port = 5222;
+            result.port = DEFAULT_PORT_XMPP;
             result.hostname = hostname;
             result.ip = ip;
             return result;
@@ -266,7 +305,8 @@ public class Resolver {
             } catch (UnknownHostException e) {
                 result.ip = null;
             }
-            result.hostname = DNSName.from(cursor.getString(cursor.getColumnIndex(HOSTNAME)));
+            final String hostname = cursor.getString(cursor.getColumnIndex(HOSTNAME));
+            result.hostname = hostname == null ? null : DNSName.from(hostname);
             result.port = cursor.getInt(cursor.getColumnIndex(PORT));
             result.priority = cursor.getInt(cursor.getColumnIndex(PRIORITY));
             result.authenticated = cursor.getInt(cursor.getColumnIndex(AUTHENTICATED)) > 0;
@@ -358,7 +398,7 @@ public class Resolver {
         public ContentValues toContentValues() {
             final ContentValues contentValues = new ContentValues();
             contentValues.put(IP, ip == null ? null : ip.getAddress());
-            contentValues.put(HOSTNAME, hostname.toString());
+            contentValues.put(HOSTNAME, hostname == null ? null : hostname.toString());
             contentValues.put(PORT, port);
             contentValues.put(PRIORITY, priority);
             contentValues.put(DIRECT_TLS, directTls ? 1 : 0);

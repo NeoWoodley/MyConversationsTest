@@ -4,15 +4,12 @@ import android.util.Base64;
 import android.util.Log;
 import android.util.SparseArray;
 
-
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -24,17 +21,18 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import eu.siacs.conversations.Config;
+import eu.siacs.conversations.utils.Compatibility;
 import eu.siacs.conversations.xml.Element;
 import rocks.xmpp.addr.Jid;
 
 public class XmppAxolotlMessage {
 	public static final String CONTAINERTAG = "encrypted";
-	public static final String HEADER = "header";
-	public static final String SOURCEID = "sid";
-	public static final String KEYTAG = "key";
-	public static final String REMOTEID = "rid";
-	public static final String IVTAG = "iv";
-	public static final String PAYLOAD = "payload";
+	private static final String HEADER = "header";
+	private static final String SOURCEID = "sid";
+	private static final String KEYTAG = "key";
+	private static final String REMOTEID = "rid";
+	private static final String IVTAG = "iv";
+	private static final String PAYLOAD = "payload";
 
 	private static final String KEYTYPE = "AES";
 	private static final String CIPHERMODE = "AES/GCM/NoPadding";
@@ -52,7 +50,7 @@ public class XmppAxolotlMessage {
 		private final String plaintext;
 		private final String fingerprint;
 
-		public XmppAxolotlPlaintextMessage(String plaintext, String fingerprint) {
+		XmppAxolotlPlaintextMessage(String plaintext, String fingerprint) {
 			this.plaintext = plaintext;
 			this.fingerprint = fingerprint;
 		}
@@ -72,7 +70,7 @@ public class XmppAxolotlMessage {
 		private final byte[] key;
 		private final byte[] iv;
 
-		public XmppAxolotlKeyTransportMessage(String fingerprint, byte[] key, byte[] iv) {
+		XmppAxolotlKeyTransportMessage(String fingerprint, byte[] key, byte[] iv) {
 			this.fingerprint = fingerprint;
 			this.key = key;
 			this.iv = iv;
@@ -142,7 +140,7 @@ public class XmppAxolotlMessage {
 		}
 	}
 
-	public XmppAxolotlMessage(Jid from, int sourceDeviceId) {
+	XmppAxolotlMessage(Jid from, int sourceDeviceId) {
 		this.from = from;
 		this.sourceDeviceId = sourceDeviceId;
 		this.keys = new SparseArray<>();
@@ -176,11 +174,11 @@ public class XmppAxolotlMessage {
 		return ciphertext != null;
 	}
 
-	public void encrypt(String plaintext) throws CryptoFailedException {
+	void encrypt(String plaintext) throws CryptoFailedException {
 		try {
 			SecretKey secretKey = new SecretKeySpec(innerKey, KEYTYPE);
 			IvParameterSpec ivSpec = new IvParameterSpec(iv);
-			Cipher cipher = Cipher.getInstance(CIPHERMODE, PROVIDER);
+			Cipher cipher = Compatibility.twentyEight() ? Cipher.getInstance(CIPHERMODE) : Cipher.getInstance(CIPHERMODE, PROVIDER);
 			cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivSpec);
 			this.ciphertext = cipher.doFinal(Config.OMEMO_PADDING ? getPaddedBytes(plaintext) : plaintext.getBytes());
 			if (Config.PUT_AUTH_TAG_INTO_KEY && this.ciphertext != null) {
@@ -275,7 +273,7 @@ public class XmppAxolotlMessage {
 		return session.processReceiving(encryptedKey);
 	}
 
-	public XmppAxolotlKeyTransportMessage getParameters(XmppAxolotlSession session, Integer sourceDeviceId) throws CryptoFailedException {
+	XmppAxolotlKeyTransportMessage getParameters(XmppAxolotlSession session, Integer sourceDeviceId) throws CryptoFailedException {
 		return new XmppAxolotlKeyTransportMessage(session.getFingerprint(), unpackKey(session, sourceDeviceId), getIV());
 	}
 
@@ -296,7 +294,7 @@ public class XmppAxolotlMessage {
 					key = newKey;
 				}
 
-				Cipher cipher = Cipher.getInstance(CIPHERMODE, PROVIDER);
+				Cipher cipher = Compatibility.twentyEight() ? Cipher.getInstance(CIPHERMODE) : Cipher.getInstance(CIPHERMODE, PROVIDER);
 				SecretKeySpec keySpec = new SecretKeySpec(key, KEYTYPE);
 				IvParameterSpec ivSpec = new IvParameterSpec(iv);
 

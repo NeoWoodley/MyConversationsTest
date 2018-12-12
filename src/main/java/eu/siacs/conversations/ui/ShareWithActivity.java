@@ -112,6 +112,7 @@ public class ShareWithActivity extends XmppActivity implements XmppConnectionSer
         switch (item.getItemId()) {
             case R.id.action_add:
                 final Intent intent = new Intent(getApplicationContext(), ChooseContactActivity.class);
+                intent.putExtra("direct_search",true);
                 startActivityForResult(intent, REQUEST_START_NEW_CONVERSATION);
                 return true;
         }
@@ -187,7 +188,7 @@ public class ShareWithActivity extends XmppActivity implements XmppConnectionSer
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         } else if (share.text != null) {
             intent.setAction(ConversationsActivity.ACTION_VIEW_CONVERSATION);
-            intent.putExtra(ConversationsActivity.EXTRA_TEXT, share.text);
+            intent.putExtra(Intent.EXTRA_TEXT, share.text);
         }
         startActivity(intent);
         finish();

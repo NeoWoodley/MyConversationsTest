@@ -1,5 +1,51 @@
 # Changelog
 
+### Version 2.3.9
+* OMEMO stability improvements
+* Context menu wen long pressing avatar in 1:1 chat
+
+### Version 2.3.8
+* make PEP avatars public to play nice with Prosody 0.11
+* Fixed re-sending failed files in group chats
+
+### Version 2.3.7
+* long press on 'allow' or 'add back' snackbar to bring up 'reject'
+* bug fixes for Android 9
+
+### Version 2.3.6
+* Improved handling of bookmark nicks
+* Show send PM menu entry in anonymous MUCs
+
+### Version 2.3.5
+* Fixed group chat mentions when nick ends in . (dot)
+* Fixed Conversations not asking for permissions after direct share
+* Fixed CVE-2018-18467
+
+### Version 2.3.4
+* Fixed sending OMEMO files to ChatSecure
+
+### Version 2.3.3
+* Fixed connection issues with user@ip type JIDs
+
+### Version 2.3.2
+* Fixed OMEMO on Android 5.1 & 6.0
+* Added setting for video quality
+* bug fixes
+
+### Version 2.3.1
+* Stronger compression for video files
+* Use SNI on STARTTLS to fix gtalk
+* Fix Quite Hours on Android 8+
+* Use Consistent Color Generation (XEP-0392)
+
+### Version 2.3.0
+* Preview and ask for confirmation before sending media files
+* View per conversation media files in contact and conference details screens
+* Enable foreground service by default for Android 8 (notification can be disabled by long pressing it)
+* Audio player: disable screen and switch to ear piece
+* Support TLSv1.3 (ejabberd ≤ 18.06 is incompatible with openssl 1.1.1 - Update ejabberd or downgrade openssl if you get ›Stream opening error‹)
+
+
 ### Version 2.2.9
 * Store bookmarks in PEP if server has ability to convert to old bookmarks
 * Show Jabber IDs from address book in Start Conversation screen

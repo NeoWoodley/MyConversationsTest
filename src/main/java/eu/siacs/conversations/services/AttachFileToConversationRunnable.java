@@ -1,8 +1,11 @@
 package eu.siacs.conversations.services;
 
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
+import android.preference.PreferenceManager;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import net.ypresto.androidtranscoder.MediaTranscoder;
@@ -23,6 +26,8 @@ import eu.siacs.conversations.entities.DownloadableFile;
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.persistance.FileBackend;
 import eu.siacs.conversations.ui.UiCallback;
+import eu.siacs.conversations.utils.Android360pFormatStrategy;
+import eu.siacs.conversations.utils.Android720pFormatStrategy;
 import eu.siacs.conversations.utils.MimeUtils;
 
 public class AttachFileToConversationRunnable implements Runnable, MediaTranscoder.Listener {
@@ -36,7 +41,7 @@ public class AttachFileToConversationRunnable implements Runnable, MediaTranscod
 	private final long originalFileSize;
 	private int currentProgress = -1;
 
-	public AttachFileToConversationRunnable(XmppConnectionService xmppConnectionService, Uri uri, String type, Message message, UiCallback<Message> callback) {
+	AttachFileToConversationRunnable(XmppConnectionService xmppConnectionService, Uri uri, String type, Message message, UiCallback<Message> callback) {
 		this.uri = uri;
 		this.type = type;
 		this.mXmppConnectionService = xmppConnectionService;
@@ -48,8 +53,8 @@ public class AttachFileToConversationRunnable implements Runnable, MediaTranscod
 		this.isVideoMessage = (mimeType != null && mimeType.startsWith("video/")) && originalFileSize > autoAcceptFileSize;
 	}
 
-	public boolean isVideoMessage() {
-		return this.isVideoMessage;
+	boolean isVideoMessage() {
+		return this.isVideoMessage && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2;
 	}
 
 	private void processAsFile() {
@@ -84,13 +89,13 @@ public class AttachFileToConversationRunnable implements Runnable, MediaTranscod
 		}
 	}
 
+	@RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 	private void processAsVideo() throws FileNotFoundException {
 		Log.d(Config.LOGTAG,"processing file as video");
 		mXmppConnectionService.startForcingForegroundNotification();
 		message.setRelativeFilePath(message.getUuid() + ".mp4");
 		final DownloadableFile file = mXmppConnectionService.getFileBackend().getFile(message);
-		final int runtime = mXmppConnectionService.getFileBackend().getMediaRuntime(uri);
-		MediaFormatStrategy formatStrategy = runtime >= 8000 ? MediaFormatStrategyPresets.createExportPreset960x540Strategy() : MediaFormatStrategyPresets.createAndroid720pStrategy();
+		final MediaFormatStrategy formatStrategy = "720".equals(getVideoCompression()) ? new Android720pFormatStrategy() : new Android360pFormatStrategy();
 		file.getParentFile().mkdirs();
 		final ParcelFileDescriptor parcelFileDescriptor = mXmppConnectionService.getContentResolver().openFileDescriptor(uri, "r");
 		if (parcelFileDescriptor == null) {
@@ -155,7 +160,7 @@ public class AttachFileToConversationRunnable implements Runnable, MediaTranscod
 
 	@Override
 	public void run() {
-		if (isVideoMessage) {
+		if (this.isVideoMessage()) {
 			try {
 				processAsVideo();
 			} catch (FileNotFoundException e) {
@@ -166,4 +171,8 @@ public class AttachFileToConversationRunnable implements Runnable, MediaTranscod
 		}
 	}
 
+	private String getVideoCompression() {
+		final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mXmppConnectionService);
+		return preferences.getString("video_compression", mXmppConnectionService.getResources().getString(R.string.video_compression));
+	}
 }

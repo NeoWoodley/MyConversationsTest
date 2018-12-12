@@ -3,7 +3,7 @@
   <string name="action_settings">設定</string>
   <string name="action_add">新しい会話</string>
   <string name="action_accounts">アカウントの管理</string>
-  <string name="action_end_conversation">この会話を終了</string>
+  <string name="action_account">アカウントの管理</string>
   <string name="action_contact_details">連絡先の詳細</string>
   <string name="action_muc_details">談話室の詳細</string>
   <string name="action_secure">安全に会話</string>
@@ -20,6 +20,8 @@
   <string name="title_activity_sharewith">会話で共有</string>
   <string name="title_activity_start_conversation">会話の開始</string>
   <string name="title_activity_choose_contact">連絡先を選択</string>
+  <string name="title_activity_choose_contacts">連絡先の選択</string>
+  <string name="title_activity_share_via_account">アカウントで共有</string>
   <string name="title_activity_block_list">ブロックリスト</string>
   <string name="just_now">ちょうど今</string>
   <string name="minute_ago">1 分前</string>
@@ -41,6 +43,7 @@
   <string name="block_domain_text">%s からの連絡をすべてブロックしますか?</string>
   <string name="unblock_domain_text">%s からの連絡をすべてブロック解除しますか?</string>
   <string name="contact_blocked">連絡先をブロックしました</string>
+  <string name="blocked">ブロックしました</string>
   <string name="remove_bookmark_text">ブックマークとして %s を削除しますか? このブックマークに関連した会話は削除されません。</string>
   <string name="register_account">サーバーに新しいアカウントを登録</string>
   <string name="change_password_on_server">サーバーのパスワードを変更</string>
@@ -74,9 +77,7 @@
   <string name="sharing_files_please_wait">フィルを共有しています。しばらくお待ちください…</string>
   <string name="action_clear_history">履歴をクリア</string>
   <string name="clear_conversation_history">会話履歴をクリア</string>
-  <string name="clear_histor_msg">この会話のすべてのメッセージを削除しますか?\n\n<b>警告:</b> これは、他のデバイスやサーバーに保存されているメッセージには影響しません。</string>
-  <string name="delete_messages">メッセージを削除</string>
-  <string name="also_end_conversation">その後、この会話を終了</string>
+  <string name="delete_file_dialog">ファイルを削除</string>
   <string name="choose_presence">デバイスを選択</string>
   <string name="send_unencrypted_message">暗号化されていないメッセージを送信</string>
   <string name="send_message">メッセージを送信</string>
@@ -117,7 +118,6 @@
   <string name="pref_confirm_messages">メッセージの確認</string>
   <string name="pref_confirm_messages_summary">あなたがメッセージを受信して読んだときに、連絡先に知らせます</string>
   <string name="pref_ui_options">UI</string>
-  <string name="openpgp_error">OpenKeychain がエラーを報告しました</string>
   <string name="accept">受付</string>
   <string name="error">エラーが発生しました</string>
   <string name="your_account">あなたのアカウント</string>
@@ -256,8 +256,6 @@
   <string name="pref_allow_message_correction_summary">連絡先が、遡及的に自分のメッセージを編集することを許可します</string>
   <string name="pref_expert_options">エキスパート設定</string>
   <string name="pref_expert_options_summary">ご利用は注意してください</string>
-  <string name="title_activity_about">Conversations について</string>
-  <string name="pref_about_conversations_summary">ビルドおよびライセンス情報</string>
   <string name="title_pref_quiet_hours">消音時間</string>
   <string name="title_pref_quiet_hours_start_time">開始時間</string>
   <string name="title_pref_quiet_hours_end_time">終了時間</string>
@@ -286,7 +284,6 @@
   <string name="send_again">再送</string>
   <string name="file_url">ファイル URL</string>
   <string name="url_copied_to_clipboard">URL をクリップボードにコピーしました</string>
-  <string name="jabber_id_copied_to_clipboard">Jabber ID をクリップボードにコピーしました</string>
   <string name="scan_qr_code">2D バーコードをスキャン</string>
   <string name="show_qr_code">2D バーコードを表示</string>
   <string name="show_block_list">ブロックリストを表示</string>
@@ -458,13 +455,10 @@
   <string name="shared_images_with_x">%s で画像を共有</string>
   <string name="shared_text_with_x">%s でテキストを共有</string>
   <string name="sync_with_contacts">連絡先と同期</string>
-  <string name="sync_with_contacts_long">Conversations はフルネームやアバターを表示するために、連絡先と XMPP 名簿と一致するようにしたいです。\n\nConversations は、サーバーにアップロードすることはなく、ローカルで連絡先を読んで一致させるだけです。\n\n今、連絡先へのアクセス許可を付与するように求められます。</string>
   <string name="notify_on_all_messages">すべてのメッセージで通知</string>
   <string name="notify_only_when_highlighted">メンションされたときにのみ通知</string>
   <string name="notify_never">通知は無効</string>
   <string name="notify_paused">通知は一時停止</string>
-  <string name="pref_picture_compression">写真を圧縮</string>
-  <string name="pref_picture_compression_summary">写真のサイズ変更と圧縮</string>
   <string name="always">常に</string>
   <string name="automatically">自動</string>
   <string name="battery_optimizations_enabled">バッテリー最適化が有効</string>
@@ -640,4 +634,10 @@
   <string name="gif">GIF</string>
   <string name="copy_link">ウェブアドレスをコピー</string>
   <string name="copy_jabber_id">Jabber ID をコピー</string>
+  <string name="yes">はい</string>
+  <string name="no">いいえ</string>
+  <string name="verifying">検証しています…</string>
+  <string name="requesting_sms">SMSを要求しています…</string>
+  <string name="something_went_wrong_processing_your_request">要求の処理中に、何か問題が発生しました。</string>
+  <string name="reject_request">要求を拒否</string>
 </resources>
